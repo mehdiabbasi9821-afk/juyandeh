@@ -170,6 +170,38 @@
     border-radius:var(--site-radius);padding:calc(12px * var(--site-space));
     font-size:calc(13px * var(--site-type));margin-bottom:calc(12px * var(--site-space));
   }
+  .photos{display:grid;grid-template-columns:repeat(4,1fr);gap:calc(6px * var(--site-space));margin-bottom:calc(8px * var(--site-space))}
+  .photos:empty{display:none}
+  .photo{position:relative;aspect-ratio:1/1;border-radius:calc(var(--site-radius) * .5);overflow:hidden;background:var(--site-bg);border:var(--line)}
+  .photo img{width:100%;height:100%;object-fit:cover;display:block}
+  .photo .x{
+    position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;
+    border:0;background:rgba(16,33,43,.72);color:#fff;font-size:14px;line-height:20px;
+    cursor:pointer;padding:0;
+  }
+  .strip{display:flex;gap:calc(6px * var(--site-space));margin-bottom:calc(10px * var(--site-space));overflow:auto;scrollbar-width:none}
+  .strip::-webkit-scrollbar{display:none}
+  .strip button{
+    flex:0 0 auto;width:calc(76px * var(--site-space));height:calc(58px * var(--site-space));
+    padding:0;border-radius:calc(var(--site-radius) * .45);overflow:hidden;
+    border:var(--line);background:var(--site-bg);cursor:pointer;
+  }
+  .strip button img{width:100%;height:100%;object-fit:cover;display:block}
+  .strip .more{display:flex;align-items:center;justify-content:center;color:var(--site-muted);font-size:calc(12px * var(--site-type));width:calc(64px * var(--site-space))}
+  .viewer{text-align:center}
+  .viewer img{max-width:100%;max-height:56vh;border-radius:calc(var(--site-radius) * .6);display:block;margin:0 auto calc(10px * var(--site-space))}
+  .viewer .nav{display:flex;justify-content:space-between;align-items:center;gap:calc(8px * var(--site-space))}
+  .viewer .nav span{color:var(--site-muted);font-size:calc(12px * var(--site-type));overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .code{
+    font-family:Consolas,"Courier New",monospace;direction:ltr;text-align:center;letter-spacing:2px;
+    background:var(--site-bg);border:1px dashed var(--site-border);
+    border-radius:calc(var(--site-radius) * .6);padding:calc(10px * var(--site-space));
+    font-size:calc(16px * var(--site-type));margin:calc(8px * var(--site-space)) 0;
+  }
+  .kv{display:flex;justify-content:space-between;gap:calc(8px * var(--site-space));padding:calc(6px * var(--site-space)) 0;border-bottom:1px dashed var(--site-border)}
+  .kv:last-child{border-bottom:0}
+  .kv span{color:var(--site-muted);font-size:calc(13px * var(--site-type))}
+  .kv b{font-weight:600}
   .page{display:none}
   .page.on{display:block}
   .hint{color:var(--site-muted);font-size:calc(12px * var(--site-type));margin-top:calc(6px * var(--site-space))}
@@ -275,6 +307,17 @@
         <textarea id="details" placeholder="طبقه، سال ساخت، پارکینگ، آسانسور، جهت ساختمان"></textarea>
       </div>
       <div class="field">
+        <label>عکس‌های فایل</label>
+        <div class="photos" id="photoGrid"></div>
+        <div class="row-actions">
+          <button class="btn soft" type="button" id="addCam">گرفتن عکس</button>
+          <button class="btn soft" type="button" id="addGal">انتخاب از گالری</button>
+        </div>
+        <input type="file" id="camInput" accept="image/*" capture="environment" style="display:none">
+        <input type="file" id="galInput" accept="image/*" multiple style="display:none">
+        <div class="hint">عکس‌ها روی همین گوشی ذخیره می‌شوند و با فایل پشتیبان هم منتقل می‌شوند.</div>
+      </div>
+      <div class="field">
         <label for="link">لینک آگهی</label>
         <input id="link" inputmode="url" placeholder="اختیاری">
       </div>
@@ -292,20 +335,16 @@
     </form>
   </section>
 
-  <!-- مشاورین -->
+  <!-- حساب من -->
   <section class="page" id="page-team">
-    <div class="card lock">
-      <div class="big">🔒</div>
-      <b>بخش مشاورین به نسخه آنلاین نیاز دارد</b>
-      <p class="hint">ورود با شماره، تعیین دسترسی و دیدن فایل دیگر مشاورین فقط وقتی ممکن است که برنامه روی سرور اجرا شود. این نسخه گوشی برای ثبت و متن آگهی خودت است.</p>
-    </div>
+    <div id="accountBox"></div>
   </section>
 </div>
 
 <nav class="tabs">
   <button data-tab="list" class="on"><span class="ico">🗂</span>فایل‌ها</button>
   <button data-tab="add"><span class="ico">＋</span>افزودن</button>
-  <button data-tab="team"><span class="ico">👥</span>مشاورین</button>
+  <button data-tab="team"><span class="ico">👤</span>حساب من</button>
 </nav>
 
 <div class="sheet-wrap" id="sheet">
@@ -320,6 +359,17 @@
   </div>
 </div>
 <div class="toast" id="toast"></div>
+
+<div class="sheet-wrap" id="viewer">
+  <div class="sheet">
+    <h3 id="viewerTitle">عکس‌ها</h3>
+    <div class="viewer" id="viewerBox"></div>
+    <div class="row-actions">
+      <button class="btn ghost" id="viewerDel">حذف این عکس</button>
+      <button class="btn soft" id="closeViewer">بستن</button>
+    </div>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -387,7 +437,190 @@
     save();
   }
 
-  var state = { tab:"list", filter:"all", q:"", editing:null, sheetId:null, sheetKind:"divar" };
+  var state = { tab:"list", filter:"all", q:"", editing:null, draftId:"", sheetId:null, sheetKind:"divar" };
+
+  /* ------------- عکس‌ها روی خود گوشی (IndexedDB) ------------- */
+  var MEDIA_DB = "juyandeh-media", MEDIA_ST = "photos";
+  var mediaOK = !!window.indexedDB;
+  var photoIndex = {};          // fileId -> [{id, thumb, name}]
+  var dbPromise = null;
+  var viewer = { list:[], i:0, fileId:null };
+
+  function openDb(){
+    if(dbPromise) return dbPromise;
+    dbPromise = new Promise(function(resolve, reject){
+      var req;
+      try { req = indexedDB.open(MEDIA_DB, 1); } catch(e){ reject(e); return; }
+      req.onupgradeneeded = function(){
+        var db = req.result;
+        if(!db.objectStoreNames.contains(MEDIA_ST)){
+          db.createObjectStore(MEDIA_ST, { keyPath:"id" });
+        }
+      };
+      req.onsuccess = function(){ resolve(req.result); };
+      req.onerror = function(){ reject(req.error); };
+    });
+    return dbPromise;
+  }
+  function store(mode){
+    return openDb().then(function(db){ return db.transaction(MEDIA_ST, mode).objectStore(MEDIA_ST); });
+  }
+  function wrap(req){
+    return new Promise(function(res, rej){
+      req.onsuccess = function(){ res(req.result); };
+      req.onerror = function(){ rej(req.error); };
+    });
+  }
+  function putPhoto(p){ return store("readwrite").then(function(s){ return wrap(s.put(p)); }); }
+  function dropPhoto(id){ return store("readwrite").then(function(s){ return wrap(s.delete(id)); }); }
+  function getPhoto(id){ return store("readonly").then(function(s){ return wrap(s.get(id)); }); }
+  function allPhotos(){ return store("readonly").then(function(s){ return wrap(s.getAll()); }); }
+  function clearPhotos(){ return store("readwrite").then(function(s){ return wrap(s.clear()); }); }
+
+  function groupPhotos(list){
+    photoIndex = {};
+    list.sort(function(a,b){ return (a.ts || 0) - (b.ts || 0); });
+    list.forEach(function(p){
+      if(!photoIndex[p.fileId]) photoIndex[p.fileId] = [];
+      photoIndex[p.fileId].push({ id:p.id, thumb:p.thumb, name:p.name });
+    });
+  }
+
+  function loadMedia(){
+    if(!mediaOK) return Promise.resolve();
+    return allPhotos().then(function(list){
+      var ids = {}, keep = [], orphan = [];
+      files.forEach(function(f){ ids[f.id] = 1; });
+      list.forEach(function(p){ (ids[p.fileId] ? keep : orphan).push(p); });
+      orphan.forEach(function(p){ dropPhoto(p.id).catch(function(){}); });
+      groupPhotos(keep);
+    }).catch(function(){ photoIndex = {}; });
+  }
+
+  function shrinkImage(file){
+    return new Promise(function(resolve, reject){
+      var url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function(){
+        var w = img.naturalWidth || 1200, h = img.naturalHeight || 900, max = 1280;
+        if(Math.max(w, h) > max){
+          if(w >= h){ h = Math.round(h * max / w); w = max; }
+          else { w = Math.round(w * max / h); h = max; }
+        }
+        var c = document.createElement("canvas");
+        c.width = w; c.height = h;
+        c.getContext("2d").drawImage(img, 0, 0, w, h);
+        var data = c.toDataURL("image/jpeg", 0.72);
+        var tw = 320, th = Math.round(h * tw / w);
+        if(th > 320){ th = 320; tw = Math.round(w * 320 / h); }
+        var t = document.createElement("canvas");
+        t.width = tw; t.height = th;
+        t.getContext("2d").drawImage(img, 0, 0, tw, th);
+        URL.revokeObjectURL(url);
+        resolve({ data:data, thumb:t.toDataURL("image/jpeg", 0.6), w:w, h:h });
+      };
+      img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error("image")); };
+      img.src = url;
+    });
+  }
+
+  function formFileId(){ return state.editing ? state.editing.id : state.draftId; }
+
+  function addPhotos(fileList){
+    if(!mediaOK){ toast("این مرورگر اجازه ذخیره عکس نمی‌دهد"); return; }
+    var id = formFileId();
+    var arr = Array.prototype.slice.call(fileList || []).filter(function(f){
+      return /^image\//.test(f.type || "");
+    });
+    if(!arr.length) return;
+    if(!photoIndex[id]) photoIndex[id] = [];
+    var added = 0;
+    arr.reduce(function(chain, f){
+      return chain.then(function(){
+        return shrinkImage(f).then(function(out){
+          var p = {
+            id:"p" + Date.now() + Math.random().toString(36).slice(2, 6),
+            fileId:id, name:f.name || "عکس", ts:Date.now(),
+            w:out.w, h:out.h, thumb:out.thumb, data:out.data
+          };
+          return putPhoto(p).then(function(){
+            photoIndex[id].push({ id:p.id, thumb:p.thumb, name:p.name });
+            added++;
+            renderPhotoGrid();
+          });
+        }).catch(function(){});
+      });
+    }, Promise.resolve()).then(function(){
+      render();
+      toast(added ? fa(added) + " عکس اضافه شد" : "عکس خوانده نشد");
+    });
+  }
+
+  function removePhoto(id){
+    Object.keys(photoIndex).forEach(function(k){
+      photoIndex[k] = photoIndex[k].filter(function(p){ return p.id !== id; });
+    });
+    if(mediaOK) dropPhoto(id).catch(function(){});
+    renderPhotoGrid();
+    render();
+  }
+
+  function renderPhotoGrid(){
+    var grid = document.getElementById("photoGrid");
+    var id = formFileId();
+    var ps = (id && photoIndex[id]) || [];
+    grid.innerHTML = ps.map(function(p){
+      return '<div class="photo"><img src="' + p.thumb + '" alt="">' +
+        '<button type="button" class="x" data-del="' + p.id + '" aria-label="حذف عکس">×</button></div>';
+    }).join("");
+  }
+
+  function stripHTML(f){
+    var ps = photoIndex[f.id] || [];
+    if(!ps.length) return "";
+    var shown = ps.slice(0, 4).map(function(p, i){
+      return '<button type="button" data-act="photo" data-id="' + f.id + '" data-i="' + i + '">' +
+        '<img src="' + p.thumb + '" alt=""></button>';
+    }).join("");
+    var more = ps.length > 4
+      ? '<button type="button" class="more" data-act="photo" data-id="' + f.id + '" data-i="0">' + fa(ps.length) + ' عکس</button>'
+      : "";
+    return '<div class="strip">' + shown + more + '</div>';
+  }
+
+  function paintViewer(){
+    var box = document.getElementById("viewerBox");
+    var p = viewer.list[viewer.i];
+    document.getElementById("viewerTitle").textContent =
+      "عکس " + fa(viewer.i + 1) + " از " + fa(viewer.list.length);
+    if(!p){ box.innerHTML = ""; return; }
+    box.innerHTML =
+      '<img id="viewerImg" alt="">' +
+      '<div class="nav">' +
+        '<button class="btn soft" type="button" data-v="prev" ' + (viewer.i <= 0 ? "disabled" : "") + '>قبلی</button>' +
+        '<span>' + esc(p.name || "") + '</span>' +
+        '<button class="btn soft" type="button" data-v="next" ' + (viewer.i >= viewer.list.length - 1 ? "disabled" : "") + '>بعدی</button>' +
+      '</div>';
+    getPhoto(p.id).then(function(rec){
+      var img = document.getElementById("viewerImg");
+      if(img && rec && rec.data) img.src = rec.data;
+    }).catch(function(){});
+  }
+
+  function openViewer(fileId, i){
+    var ps = photoIndex[fileId] || [];
+    if(!ps.length) return;
+    viewer.list = ps;
+    viewer.fileId = fileId;
+    viewer.i = Math.max(0, Math.min(i || 0, ps.length - 1));
+    document.getElementById("viewer").classList.add("on");
+    paintViewer();
+  }
+  function closeViewer(){
+    document.getElementById("viewer").classList.remove("on");
+    viewer.list = []; viewer.fileId = null;
+  }
+
 
   var listEl = document.getElementById("list");
   var countEl = document.getElementById("countLine");
@@ -437,6 +670,7 @@
         '</div>' +
         '<div class="price">' + esc(priceText(f)) + '</div>' +
         '<div class="status" style="margin-bottom:10px"><span class="dot ' + statusDot(f.status) + '"></span>' + esc(f.status || "در انتظار") + ' <small>' + esc(f.createdAt || "") + '</small></div>' +
+        stripHTML(f) +
         '<div class="card-actions">' +
           '<button class="btn" data-act="divar" data-id="' + f.id + '">متن دیوار</button>' +
           '<button class="btn ghost" data-act="sheypoor" data-id="' + f.id + '">متن شیپور</button>' +
@@ -529,7 +763,12 @@
       b.classList.toggle("on", b.dataset.tab === tab);
     });
     if(tab !== "add") resetForm();
+    if(tab === "team") paintAccount();
     window.scrollTo(0,0);
+  }
+
+  function newDraftId(){
+    state.draftId = "f" + Date.now() + Math.random().toString(36).slice(2, 5);
   }
 
   function resetForm(){
@@ -543,6 +782,7 @@
       b.classList.toggle("on", b.dataset.deal === "sale");
     });
     syncDeal();
+    renderPhotoGrid();
   }
 
   function startEdit(id){
@@ -568,6 +808,7 @@
     document.getElementById("saveBtn").textContent = "ذخیره تغییرات";
     document.getElementById("cancelEdit").style.display = "block";
     syncDeal();
+    renderPhotoGrid();
     window.scrollTo(0,0);
   }
 
@@ -591,9 +832,14 @@
     if(!b) return;
     var id = b.dataset.id, act = b.dataset.act;
     if(act === "divar" || act === "sheypoor"){ openSheet(id, act); return; }
+    if(act === "photo"){ openViewer(id, +b.dataset.i || 0); return; }
     if(act === "edit"){ startEdit(id); return; }
     if(act === "del"){
-      if(!confirm("این فایل حذف شود؟")) return;
+      if(!confirm("این فایل حذف شود؟ عکس‌هایش هم پاک می‌شوند.")) return;
+      (photoIndex[id] || []).forEach(function(p){
+        if(mediaOK) dropPhoto(p.id).catch(function(){});
+      });
+      delete photoIndex[id];
       files = files.filter(function(x){ return x.id !== id; });
       save(); render(); toast("حذف شد");
     }
@@ -613,7 +859,7 @@
     var deal = document.querySelector("#dealSeg button.on").dataset.deal;
     var title = document.getElementById("title").value.trim();
     if(!title){ toast("عنوان لازم است"); return; }
-    var obj = state.editing ? state.editing : { id:"f" + Date.now(), status:"متن آماده", createdAt: nowText() };
+    var obj = state.editing ? state.editing : { id: state.draftId, status:"متن آماده", createdAt: nowText() };
     obj.deal = deal;
     obj.title = title;
     obj.district = document.getElementById("district").value.trim();
@@ -641,6 +887,7 @@
       if(i > -1) files[i] = obj;
     }else{
       files.unshift(obj);
+      newDraftId();
     }
     save();
     resetForm();
@@ -651,6 +898,51 @@
 
   document.getElementById("cancelEdit").addEventListener("click", function(){
     resetForm(); switchTab("list");
+  });
+
+  document.getElementById("addCam").addEventListener("click", function(){
+    document.getElementById("camInput").click();
+  });
+  document.getElementById("addGal").addEventListener("click", function(){
+    document.getElementById("galInput").click();
+  });
+  document.getElementById("camInput").addEventListener("change", function(){
+    addPhotos(this.files);
+    this.value = "";
+  });
+  document.getElementById("galInput").addEventListener("change", function(){
+    addPhotos(this.files);
+    this.value = "";
+  });
+  document.getElementById("photoGrid").addEventListener("click", function(e){
+    var b = e.target.closest("button[data-del]");
+    if(!b) return;
+    if(!confirm("این عکس حذف شود؟")) return;
+    removePhoto(b.dataset.del);
+  });
+
+  document.getElementById("closeViewer").addEventListener("click", closeViewer);
+  document.getElementById("viewer").addEventListener("click", function(e){
+    if(e.target === this) closeViewer();
+  });
+  document.getElementById("viewerBox").addEventListener("click", function(e){
+    var b = e.target.closest("button[data-v]");
+    if(!b || b.disabled) return;
+    viewer.i += (b.dataset.v === "next" ? 1 : -1);
+    if(viewer.i < 0) viewer.i = 0;
+    if(viewer.i > viewer.list.length - 1) viewer.i = viewer.list.length - 1;
+    paintViewer();
+  });
+  document.getElementById("viewerDel").addEventListener("click", function(){
+    var p = viewer.list[viewer.i];
+    if(!p) return;
+    if(!confirm("این عکس حذف شود؟")) return;
+    removePhoto(p.id);
+    viewer.list = viewer.list.filter(function(x){ return x.id !== p.id; });
+    if(!viewer.list.length){ closeViewer(); toast("حذف شد"); return; }
+    if(viewer.i > viewer.list.length - 1) viewer.i = viewer.list.length - 1;
+    paintViewer();
+    toast("حذف شد");
   });
 
   document.getElementById("closeSheet").addEventListener("click", closeSheet);
@@ -671,16 +963,26 @@
   });
 
   document.getElementById("backupBtn").addEventListener("click", function(){
-    var data = JSON.stringify({ savedAt: nowText(), files: files }, null, 2);
-    var blob = new Blob([data], { type: "application/json;charset=utf-8" });
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "juyandeh-backup-" + nowText().replace(/\//g, "-") + ".json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
-    toast("پشتیبان ذخیره شد");
+    var photosP = mediaOK ? allPhotos().catch(function(){ return []; }) : Promise.resolve([]);
+    photosP.then(function(photos){
+      var payload = { savedAt: nowText(), app:"juyandeh-karako", files: files, photos: photos || [] };
+      var data = JSON.stringify(payload);
+      var note = "پشتیبان ذخیره شد";
+      if(data.length > 22 * 1024 * 1024){
+        payload.photos = [];
+        data = JSON.stringify(payload, null, 2);
+        note = "عکس‌ها جا نشد؛ فقط فایل‌ها ذخیره شد";
+      }
+      var blob = new Blob([data], { type: "application/json;charset=utf-8" });
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "juyandeh-backup-" + nowText().replace(/\//g, "-") + ".json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+      toast(note);
+    });
   });
 
   document.getElementById("restoreBtn").addEventListener("click", function(){
@@ -697,15 +999,27 @@
         var parsed = JSON.parse(String(reader.result));
         var arr = Array.isArray(parsed) ? parsed : (parsed && parsed.files);
         if(!Array.isArray(arr)) throw new Error("bad");
-        if(!confirm("جای فایل‌های فعلی با پشتیبان عوض شود؟ (" + arr.length + " فایل)")) return;
+        if(!confirm("جای فایل‌های فعلی با پشتیبان عوض شود؟ (" + arr.length + " فایل)")){ input.value = ""; return; }
         files = arr.map(function(f){
           f.id = f.id || ("f" + Math.random().toString(36).slice(2));
           f.status = f.status || "در انتظار";
           return f;
         });
-        save(); render(); toast("بازیابی شد");
-      }catch(e){ toast("فایل پشتیبان خوانده نشد"); }
-      input.value = "";
+        var photos = (parsed && Array.isArray(parsed.photos)) ? parsed.photos : [];
+        save();
+        var done = mediaOK && photos.length
+          ? clearPhotos().then(function(){
+              return photos.reduce(function(chain, p){
+                return chain.then(function(){ return putPhoto(p).catch(function(){}); });
+              }, Promise.resolve());
+            }).then(function(){ return allPhotos(); }).then(groupPhotos)
+          : Promise.resolve().then(function(){ photoIndex = {}; });
+        done.catch(function(){}).then(function(){
+          render(); renderPhotoGrid(); resetForm();
+          toast("بازیابی شد");
+        });
+        input.value = "";
+      }catch(e){ toast("فایل پشتیبان خوانده نشد"); input.value = ""; }
     };
     reader.readAsText(file);
   });
@@ -714,8 +1028,204 @@
     b.addEventListener("click", function(){ switchTab(b.dataset.tab); });
   });
 
+  /* ------------- حساب و دسترسی ------------- */
+  var ACC_KEY = "juyandeh-account-v1";
+  var account = null;
+  var access = { status:"none", at:"", since:"" };
+
+  function normPhone(v){
+    var s = String(v == null ? "" : v);
+    s = s.replace(/[۰-۹]/g, function(d){ return String("۰۱۲۳۴۵۶۷۸۹".indexOf(d)); });
+    s = s.replace(/[٠-٩]/g, function(d){ return String("٠١٢٣٤٥٦٧٨٩".indexOf(d)); });
+    s = s.replace(/\D/g, "");
+    if(s.indexOf("0098") === 0) s = s.slice(4);
+    else if(s.indexOf("98") === 0 && s.length > 10) s = s.slice(2);
+    if(s.length === 10 && s.charAt(0) === "9") s = "0" + s;
+    return s;
+  }
+  function phoneHash(ph){
+    var s = "jk:" + normPhone(ph), h = 0x811c9dc5;
+    for(var i = 0; i < s.length; i++){
+      h ^= s.charCodeAt(i);
+      h = (h + (h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24)) >>> 0;
+    }
+    return ("0000000" + h.toString(16)).slice(-8);
+  }
+  function reqCode(ph){
+    var h = phoneHash(ph).toUpperCase();
+    return "K-" + h.slice(0, 4) + "-" + h.slice(4);
+  }
+  function phoneText(ph){
+    var s = normPhone(ph);
+    if(s.length !== 11) return s;
+    return fa(s.slice(0, 4) + " " + s.slice(4, 7) + " " + s.slice(7));
+  }
+
+  function loadAccount(){
+    account = null;
+    try{
+      var raw = localStorage.getItem(ACC_KEY);
+      if(raw) account = JSON.parse(raw);
+    }catch(e){ account = null; }
+    if(account && !account.phone) account = null;
+  }
+  function saveAccount(){
+    try{
+      if(account) localStorage.setItem(ACC_KEY, JSON.stringify(account));
+      else localStorage.removeItem(ACC_KEY);
+    }catch(e){}
+  }
+
+  function copyPlain(txt, okMsg){
+    function fallback(){
+      var ta = document.createElement("textarea");
+      ta.value = txt;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus(); ta.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch(e){ ok = false; }
+      document.body.removeChild(ta);
+      toast(ok ? (okMsg || "کپی شد") : "کپی نشد؛ دستی انتخاب کن");
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(txt).then(function(){ toast(okMsg || "کپی شد"); }, fallback);
+    } else fallback();
+  }
+
+  function accessRow(){
+    if(access.status === "ok") return '<span class="status"><span class="dot ok"></span>دسترسی تأیید شده</span>';
+    if(access.status === "pending") return '<span class="status"><span class="dot wait"></span>در انتظار تأیید دفتر</span>';
+    if(access.status === "checking") return '<span class="status"><span class="dot wait"></span>در حال بررسی…</span>';
+    if(access.status === "offline") return '<span class="status"><span class="dot"></span>وضعیت خوانده نشد</span>';
+    return '<span class="status"><span class="dot"></span>بررسی نشده</span>';
+  }
+
+  function requestText(){
+    return "درخواست دسترسی جوینده کاراکو\n" +
+      "نام: " + (account.name || "") + "\n" +
+      "شماره: " + normPhone(account.phone) + "\n" +
+      "کد درخواست: " + reqCode(account.phone);
+  }
+
+  function paintAccount(){
+    var box = document.getElementById("accountBox");
+    if(!account){
+      box.innerHTML =
+        '<div class="card">' +
+          '<h3 style="margin-top:0">ورود با شماره موبایل</h3>' +
+          '<p class="hint" style="margin-top:0">شماره‌ات را ثبت کن تا دفتر بتواند برایت دسترسی بدهد.</p>' +
+          '<form id="accForm" autocomplete="on">' +
+            '<div class="field"><label for="accName">نام و نام خانوادگی</label>' +
+              '<input id="accName" required placeholder="مثلا رضا احمدی"></div>' +
+            '<div class="field"><label for="accPhone">شماره موبایل</label>' +
+              '<input id="accPhone" required inputmode="tel" autocomplete="tel" placeholder="۰۹۱۲۳۴۵۶۷۸۹"></div>' +
+            '<button class="save" type="submit">ثبت شماره</button>' +
+          '</form>' +
+          '<div class="note" style="margin-top:12px;margin-bottom:0">' +
+            'شماره فقط روی همین گوشی می‌ماند. تأیید دسترسی را برنامه دفتر انجام می‌دهد.' +
+          '</div>' +
+        '</div>' +
+        '<div class="card">' +
+          '<h3 style="margin-top:0">بعد از ورود چه می‌شود</h3>' +
+          '<div class="kv"><span>ثبت فایل و عکس</span><b>همین حالا</b></div>' +
+          '<div class="kv"><span>متن آماده دیوار و شیپور</span><b>همین حالا</b></div>' +
+          '<div class="kv"><span>دیدن فایل همکاران</span><b>با تأیید دفتر</b></div>' +
+          '<div class="kv"><span>فرستادن فایل و عکس به دفتر</span><b>با تأیید دفتر</b></div>' +
+        '</div>';
+      return;
+    }
+    var ok = access.status === "ok";
+    box.innerHTML =
+      '<div class="card">' +
+        '<h3 style="margin-top:0">حساب من</h3>' +
+        '<div class="kv"><span>نام</span><b>' + esc(account.name || "—") + '</b></div>' +
+        '<div class="kv"><span>شماره</span><b>' + phoneText(account.phone) + '</b></div>' +
+        '<div class="kv"><span>وضعیت</span>' + accessRow() + '</div>' +
+        '<div class="code">' + reqCode(account.phone) + '</div>' +
+        '<div class="row-actions">' +
+          '<button class="btn" type="button" data-acc="check">به‌روزرسانی وضعیت</button>' +
+          '<button class="btn ghost" type="button" data-acc="send">کپی درخواست برای دفتر</button>' +
+          '<button class="btn soft" type="button" data-acc="out">خروج از حساب</button>' +
+        '</div>' +
+        '<p class="hint">این کد را برای دفتر بفرست. دفتر بعد از ثبت شماره‌ات، دسترسی را باز می‌کند.</p>' +
+      '</div>' +
+      '<div class="card">' +
+        '<h3 style="margin-top:0">امکانات حساب</h3>' +
+        '<div class="kv"><span>ثبت فایل، عکس و متن آگهی</span><b>فعال</b></div>' +
+        '<div class="kv"><span>دیدن فایل همکاران</span><b>' + (ok ? "فعال" : "پس از تأیید") + '</b></div>' +
+        '<div class="kv"><span>فرستادن فایل و عکس به دفتر</span><b>' + (ok ? "فعال" : "پس از تأیید") + '</b></div>' +
+        '<p class="hint" style="margin-bottom:0">' + (access.at ? "آخرین بررسی: " + access.at : "وضعیت هنوز بررسی نشده.") + '</p>' +
+      '</div>';
+  }
+
+  function checkAccess(report){
+    if(!account){ access = { status:"none", at:"", since:"" }; paintAccount(); return; }
+    var mine = phoneHash(account.phone);
+    access = { status:"checking", at:nowText(), since:"" };
+    paintAccount();
+    fetch("access.json?t=" + Date.now(), { cache:"no-store" })
+      .then(function(r){
+        if(!r.ok) throw new Error(String(r.status));
+        return r.json();
+      })
+      .then(function(j){
+        var list = (j && j.approved) || [];
+        var me = null;
+        for(var i = 0; i < list.length; i++){
+          var h = String((list[i] && (list[i].h || list[i].phone)) || "").toLowerCase();
+          if(h === mine) me = list[i];
+        }
+        access = { status: me ? "ok" : "pending", at:nowText(), since:(me && me.since) || "" };
+        paintAccount();
+        if(report) toast(me ? "دسترسی فعال است" : "هنوز تأیید نشده");
+      })
+      .catch(function(){
+        access = { status:"offline", at:nowText(), since:"" };
+        paintAccount();
+        if(report) toast("وضعیت خوانده نشد");
+      });
+  }
+
+  document.getElementById("accountBox").addEventListener("submit", function(e){
+    var f = e.target;
+    if(!f || f.id !== "accForm") return;
+    e.preventDefault();
+    var nm = document.getElementById("accName").value.trim();
+    var ph = normPhone(document.getElementById("accPhone").value);
+    if(!nm){ toast("نام را بنویس"); return; }
+    if(!/^09\d{9}$/.test(ph)){ toast("شماره موبایل درست نیست"); return; }
+    account = { name:nm, phone:ph, since:nowText() };
+    saveAccount();
+    access = { status:"none", at:"", since:"" };
+    paintAccount();
+    toast("شماره ثبت شد");
+    checkAccess(true);
+  });
+
+  document.getElementById("accountBox").addEventListener("click", function(e){
+    var b = e.target.closest("button[data-acc]");
+    if(!b || !account) return;
+    if(b.dataset.acc === "check"){ checkAccess(true); return; }
+    if(b.dataset.acc === "send"){ copyPlain(requestText(), "متن درخواست کپی شد"); return; }
+    if(b.dataset.acc === "out"){
+      if(!confirm("از حساب خارج شوی؟ فایل‌ها و عکس‌ها پاک نمی‌شوند.")) return;
+      account = null;
+      saveAccount();
+      access = { status:"none", at:"", since:"" };
+      paintAccount();
+      toast("خارج شدی");
+    }
+  });
+
   if(!storageOK) document.getElementById("offlineNote").style.display = "block";
-  load(); seed(); render(); syncDeal();
+  loadAccount();
+  load(); seed();
+  newDraftId();
+  render(); syncDeal(); paintAccount();
+  loadMedia().then(function(){ renderPhotoGrid(); render(); });
+  if(account) checkAccess(false);
 })();
 </script>
 </body>
