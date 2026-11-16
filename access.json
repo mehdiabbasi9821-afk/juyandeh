@@ -1,9 +1,13 @@
 {
-    "updatedAt":  "2026-11-16 17:17",
+    "updatedAt":  "2026-11-16 17:33",
     "app":  "juyandeh-karako",
     "approved":  [
                      {
                          "h":  "6761ab5c",
+                         "since":  "2026-11-16"
+                     },
+                     {
+                         "h":  "24201c33",
                          "since":  "2026-11-16"
                      }
                  ],
